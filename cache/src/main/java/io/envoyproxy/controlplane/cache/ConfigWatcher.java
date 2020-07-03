@@ -1,6 +1,5 @@
 package io.envoyproxy.controlplane.cache;
 
-import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.concurrent.ThreadSafe;
@@ -11,7 +10,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * consumer, in effect terminating the watch for the request. ConfigWatcher implementations must be thread-safe.
  */
 @ThreadSafe
-public interface ConfigWatcher {
+public interface ConfigWatcher<Response> {
 
   /**
    * Returns a new configuration resource {@link Watch} for the given discovery request.
@@ -25,7 +24,7 @@ public interface ConfigWatcher {
    */
   Watch createWatch(
       boolean ads,
-      DiscoveryRequest request,
+      XdsRequest request,
       Set<String> knownResourceNames,
       Consumer<Response> responseConsumer,
       boolean hasClusterChanged);

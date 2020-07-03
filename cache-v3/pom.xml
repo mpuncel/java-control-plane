@@ -47,5 +47,11 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.envoyproxy.controlplane</groupId>
+            <artifactId>cache-core</artifactId>
+            <version>0.1.24-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

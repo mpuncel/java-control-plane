@@ -5,7 +5,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import com.google.protobuf.Any;
 import io.envoyproxy.controlplane.cache.Resources;
 import io.envoyproxy.controlplane.cache.Response;
-import io.envoyproxy.controlplane.cache.Watch;
 import io.envoyproxy.controlplane.server.exception.RequestException;
 import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
 import io.envoyproxy.envoy.api.v2.DiscoveryResponse;

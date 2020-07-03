@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 
-import io.envoyproxy.controlplane.cache.SimpleCache;
 import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
 import io.envoyproxy.envoy.api.v2.DiscoveryResponse;
 import io.grpc.netty.NettyServerBuilder;

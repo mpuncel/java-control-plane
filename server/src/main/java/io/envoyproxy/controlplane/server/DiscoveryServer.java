@@ -1,7 +1,6 @@
 package io.envoyproxy.controlplane.server;
 
 import com.google.common.base.Preconditions;
-import io.envoyproxy.controlplane.cache.ConfigWatcher;
 import io.envoyproxy.controlplane.cache.Resources;
 import io.envoyproxy.controlplane.server.serializer.DefaultProtoResourcesSerializer;
 import io.envoyproxy.controlplane.server.serializer.ProtoResourcesSerializer;

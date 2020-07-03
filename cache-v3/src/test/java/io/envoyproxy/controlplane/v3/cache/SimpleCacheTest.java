@@ -1,11 +1,11 @@
 package io.envoyproxy.controlplane.v3.cache;
 
-import static io.envoyproxy.controlplane.v3.cache.Resources.ROUTE_TYPE_URL;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Message;
+import io.envoyproxy.controlplane.cache.StatusInfo;
+import io.envoyproxy.controlplane.core.cache.SimpleCache;
+import io.envoyproxy.controlplane.core.cache.Watch;
 import io.envoyproxy.envoy.config.cluster.v3.Cluster;
 import io.envoyproxy.envoy.config.core.v3.Node;
 import io.envoyproxy.envoy.config.endpoint.v3.ClusterLoadAssignment;
@@ -22,6 +22,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.junit.Test;
+
+import static io.envoyproxy.controlplane.v3.cache.Resources.ROUTE_TYPE_URL;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SimpleCacheTest {
 

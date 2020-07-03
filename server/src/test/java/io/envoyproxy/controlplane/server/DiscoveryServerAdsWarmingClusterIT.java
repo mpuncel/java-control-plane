@@ -7,10 +7,8 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 
 import com.google.protobuf.util.Durations;
-import io.envoyproxy.controlplane.cache.CacheStatusInfo;
 import io.envoyproxy.controlplane.cache.NodeGroup;
 import io.envoyproxy.controlplane.cache.Resources;
-import io.envoyproxy.controlplane.cache.SimpleCache;
 import io.envoyproxy.controlplane.cache.Snapshot;
 import io.envoyproxy.controlplane.cache.TestResources;
 import io.envoyproxy.envoy.api.v2.Cluster;

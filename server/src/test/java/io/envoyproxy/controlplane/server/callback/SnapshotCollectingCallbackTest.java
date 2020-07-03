@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableSet;
 import io.envoyproxy.controlplane.cache.NodeGroup;
-import io.envoyproxy.controlplane.cache.SimpleCache;
 import io.envoyproxy.controlplane.cache.Snapshot;
 import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
 import java.time.Clock;

@@ -4,7 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Message;
-import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>The snapshot can be partial, e.g. only include RDS or EDS resources.
  */
-public class SimpleCache<T> implements SnapshotCache<T> {
+public class SimpleCache<T, R> implements SnapshotCache<T, R> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SimpleCache.class);
 
@@ -43,7 +42,8 @@ public class SimpleCache<T> implements SnapshotCache<T> {
 
   @GuardedBy("lock")
   private final Map<T, Snapshot> snapshots = new HashMap<>();
-  private final ConcurrentMap<T, ConcurrentMap<String, CacheStatusInfo<T>>> statuses = new ConcurrentHashMap<>();
+  private final ConcurrentMap<T, ConcurrentMap<String, CacheStatusInfo<T>>> statuses =
+      new ConcurrentHashMap<>();
 
   private AtomicLong watchCount = new AtomicLong();
 
@@ -84,9 +84,9 @@ public class SimpleCache<T> implements SnapshotCache<T> {
 
   public Watch createWatch(
       boolean ads,
-      DiscoveryRequest request,
+      XdsRequest request,
       Set<String> knownResourceNames,
-      Consumer<Response> responseConsumer) {
+      Consumer<R> responseConsumer) {
     return createWatch(ads, request, knownResourceNames, responseConsumer, false);
   }
 
@@ -96,12 +96,20 @@ public class SimpleCache<T> implements SnapshotCache<T> {
   @Override
   public Watch createWatch(
       boolean ads,
-      DiscoveryRequest request,
+      XdsRequest request,
       Set<String> knownResourceNames,
-      Consumer<Response> responseConsumer,
+      Consumer<R> responseConsumer,
       boolean hasClusterChanged) {
 
-    T group = groups.hash(request.getNode());
+    T group;
+    if (request.getNodeV2() != null) {
+      group = groups.hash(request.getNodeV2());
+    } else if (request.getNodeV3() != null) {
+      group = groups.hashV3(request.getNodeV3());
+    } else {
+      throw new IllegalStateException("request was neither v2 nor v3");
+    }
+
     // even though we're modifying, we take a readLock to allow multiple watches to be created in parallel since it
     // doesn't conflict
     readLock.lock();
@@ -251,7 +259,8 @@ public class SimpleCache<T> implements SnapshotCache<T> {
   }
 
   @VisibleForTesting
-  protected void respondWithSpecificOrder(T group, Snapshot snapshot,
+  protected void respondWithSpecificOrder(T group,
+                                          Snapshot snapshot,
                                           ConcurrentMap<String, CacheStatusInfo<T>> statusMap) {
     for (String typeUrl : Resources.TYPE_URLS) {
       CacheStatusInfo<T> status = statusMap.get(typeUrl);
@@ -285,7 +294,8 @@ public class SimpleCache<T> implements SnapshotCache<T> {
     }
   }
 
-  private Response createResponse(DiscoveryRequest request, Map<String, ? extends Message> resources, String version) {
+  private Response createResponse(XdsRequest request, Map<String, ? extends Message> resources,
+      String version) {
     Collection<? extends Message> filtered = request.getResourceNamesList().isEmpty()
         ? resources.values()
         : request.getResourceNamesList().stream()

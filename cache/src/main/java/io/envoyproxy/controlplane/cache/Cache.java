@@ -1,6 +1,5 @@
 package io.envoyproxy.controlplane.cache;
 
-import io.envoyproxy.envoy.api.v2.core.Node;
 import java.util.Collection;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -8,18 +7,18 @@ import javax.annotation.concurrent.ThreadSafe;
  * {@code Cache} is a generic config cache with support for watchers.
  */
 @ThreadSafe
-public interface Cache<T> extends ConfigWatcher {
+public interface Cache<Group, Response> extends ConfigWatcher<Response> {
 
   /**
-   * Returns all known {@link Node} groups.
+   * Returns all known groups.
    *
    */
-  Collection<T> groups();
+  Collection<Group> groups();
 
   /**
-   * Returns the current {@link StatusInfo} for the given {@link Node} group.
+   * Returns the current {@link StatusInfo} for the given group.
    *
    * @param group the node group whose status is being fetched
    */
-  StatusInfo statusInfo(T group);
+  StatusInfo statusInfo(Group group);
 }

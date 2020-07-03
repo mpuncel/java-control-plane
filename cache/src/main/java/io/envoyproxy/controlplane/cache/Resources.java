@@ -1,8 +1,5 @@
 package io.envoyproxy.controlplane.cache;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.envoyproxy.envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager.RouteSpecifierCase.RDS;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -28,6 +25,9 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.envoyproxy.envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager.RouteSpecifierCase.RDS;
+
 public class Resources {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Resources.class);
@@ -35,13 +35,23 @@ public class Resources {
   static final String FILTER_ENVOY_ROUTER = "envoy.router";
   static final String FILTER_HTTP_CONNECTION_MANAGER = "envoy.http_connection_manager";
 
-  private static final String TYPE_URL_PREFIX = "type.googleapis.com/envoy.api.v2.";
+  public static final String V3_CLUSTER_TYPE_URL = "type.googleapis.com/envoy.config.cluster.v3"
+      + ".Cluster";
+  public static final String V3_ENDPOINT_TYPE_URL = "type.googleapis.com/envoy.config.endpoint.v3"
+      + ".ClusterLoadAssignment";
+  public static final String V3_LISTENER_TYPE_URL = "type.googleapis.com/envoy.config.listener.v3"
+      + ".Listener";
+  public static final String V3_ROUTE_TYPE_URL = "type.googleapis.com/envoy.config.route.v3"
+      + ".RouteConfiguration";
+  public static final String V3_SECRET_TYPE_URL = "type.googleapis.com/envoy.extensions"
+      + ".transport_sockets.tls.v3.Secret";
 
-  public static final String CLUSTER_TYPE_URL = TYPE_URL_PREFIX + "Cluster";
-  public static final String ENDPOINT_TYPE_URL = TYPE_URL_PREFIX + "ClusterLoadAssignment";
-  public static final String LISTENER_TYPE_URL = TYPE_URL_PREFIX + "Listener";
-  public static final String ROUTE_TYPE_URL = TYPE_URL_PREFIX + "RouteConfiguration";
-  public static final String SECRET_TYPE_URL = TYPE_URL_PREFIX + "auth.Secret";
+  private static final String V2_TYPE_URL_PREFIX = "type.googleapis.com/envoy.api.v2.";
+  public static final String CLUSTER_TYPE_URL = V2_TYPE_URL_PREFIX + "Cluster";
+  public static final String ENDPOINT_TYPE_URL = V2_TYPE_URL_PREFIX + "ClusterLoadAssignment";
+  public static final String LISTENER_TYPE_URL = V2_TYPE_URL_PREFIX + "Listener";
+  public static final String ROUTE_TYPE_URL = V2_TYPE_URL_PREFIX + "RouteConfiguration";
+  public static final String SECRET_TYPE_URL = V2_TYPE_URL_PREFIX + "auth.Secret";
 
   public static final List<String> TYPE_URLS = ImmutableList.of(
       CLUSTER_TYPE_URL,

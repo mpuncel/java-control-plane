@@ -1,11 +1,5 @@
 package io.envoyproxy.controlplane.cache;
 
-import static io.envoyproxy.controlplane.cache.Resources.CLUSTER_TYPE_URL;
-import static io.envoyproxy.controlplane.cache.Resources.ENDPOINT_TYPE_URL;
-import static io.envoyproxy.controlplane.cache.Resources.LISTENER_TYPE_URL;
-import static io.envoyproxy.controlplane.cache.Resources.ROUTE_TYPE_URL;
-import static io.envoyproxy.controlplane.cache.Resources.SECRET_TYPE_URL;
-
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -25,7 +19,7 @@ import java.util.Set;
  * have distinct versions per node group.
  */
 @AutoValue
-public abstract class Snapshot {
+public abstract class Snapshot<C, CLA, L, R, S> {
 
   /**
    * Returns a new {@link Snapshot} instance that is versioned uniformly across all resources.
@@ -46,9 +40,44 @@ public abstract class Snapshot {
 
     return new AutoValue_Snapshot(
         SnapshotResources.create(clusters, version),
+        null,
         SnapshotResources.create(endpoints, version),
+        null,
         SnapshotResources.create(listeners, version),
+        null,
         SnapshotResources.create(routes, version),
+        null,
+        SnapshotResources.create(secrets, version),
+        null);
+  }
+
+  /**
+   * Returns a new {@link Snapshot} instance that is versioned uniformly across all resources.
+   *
+   * @param clusters the cluster resources in this snapshot
+   * @param endpoints the endpoint resources in this snapshot
+   * @param listeners the listener resources in this snapshot
+   * @param routes the route resources in this snapshot
+   * @param version the version associated with all resources in this snapshot
+   */
+  public static Snapshot createV3(
+      Iterable<io.envoyproxy.envoy.config.cluster.v3.Cluster> clusters,
+      Iterable<io.envoyproxy.envoy.config.endpoint.v3.ClusterLoadAssignment> endpoints,
+      Iterable<io.envoyproxy.envoy.config.listener.v3.Listener> listeners,
+      Iterable<io.envoyproxy.envoy.config.route.v3.RouteConfiguration> routes,
+      Iterable<io.envoyproxy.envoy.extensions.transport_sockets.tls.v3.Secret> secrets,
+      String version) {
+
+    return new AutoValue_Snapshot(
+        null,
+        SnapshotResources.create(clusters, version),
+        null,
+        SnapshotResources.create(endpoints, version),
+        null,
+        SnapshotResources.create(listeners, version),
+        null,
+        SnapshotResources.create(routes, version),
+        null,
         SnapshotResources.create(secrets, version));
   }
 
@@ -79,10 +108,15 @@ public abstract class Snapshot {
     // TODO(snowp): add a builder alternative
     return new AutoValue_Snapshot(
         SnapshotResources.create(clusters, clustersVersion),
+        null,
         SnapshotResources.create(endpoints, endpointsVersion),
+        null,
         SnapshotResources.create(listeners, listenersVersion),
+        null,
         SnapshotResources.create(routes, routesVersion),
-        SnapshotResources.create(secrets, secretsVersion));
+        null,
+        SnapshotResources.create(secrets, secretsVersion),
+        null);
   }
 
   /**
@@ -113,10 +147,15 @@ public abstract class Snapshot {
 
     return new AutoValue_Snapshot(
         SnapshotResources.create(clusters, clusterVersionResolver),
+        null,
         SnapshotResources.create(endpoints, endpointVersionResolver),
+        null,
         SnapshotResources.create(listeners, listenerVersionResolver),
+        null,
         SnapshotResources.create(routes, routeVersionResolver),
-        SnapshotResources.create(secrets, secretVersionResolver));
+        null,
+        SnapshotResources.create(secrets, secretVersionResolver),
+        null);
   }
 
   /**
@@ -135,9 +174,19 @@ public abstract class Snapshot {
   public abstract SnapshotResources<Cluster> clusters();
 
   /**
+   * Returns all v3 cluster items in the CDS payload.
+   */
+  public abstract SnapshotResources<io.envoyproxy.envoy.config.cluster.v3.Cluster> clustersV3();
+
+  /**
    * Returns all endpoint items in the EDS payload.
    */
   public abstract SnapshotResources<ClusterLoadAssignment> endpoints();
+
+  /**
+   * Returns all v3 endpoint items in the EDS payload.
+   */
+  public abstract SnapshotResources<io.envoyproxy.envoy.config.endpoint.v3.ClusterLoadAssignment> endpointsV3();
 
   /**
    * Returns all listener items in the LDS payload.
@@ -145,14 +194,29 @@ public abstract class Snapshot {
   public abstract SnapshotResources<Listener> listeners();
 
   /**
+   * Returns all listener items in the LDS payload.
+   */
+  public abstract SnapshotResources<io.envoyproxy.envoy.config.listener.v3.Listener> listenersV3();
+
+  /**
    * Returns all route items in the RDS payload.
    */
   public abstract SnapshotResources<RouteConfiguration> routes();
 
   /**
+   * Returns all route items in the RDS payload.
+   */
+  public abstract SnapshotResources<io.envoyproxy.envoy.config.route.v3.RouteConfiguration> routesV3();
+
+  /**
    * Returns all secret items in the SDS payload.
    */
   public abstract SnapshotResources<Secret> secrets();
+
+  /**
+   * Returns all secret items in the SDS payload.
+   */
+  public abstract SnapshotResources<io.envoyproxy.envoy.extensions.transport_sockets.tls.v3.Secret> secretsV3();
 
   /**
    * Asserts that all dependent resources are included in the snapshot. All EDS resources are listed by name in CDS
@@ -166,11 +230,23 @@ public abstract class Snapshot {
   public void ensureConsistent() throws SnapshotConsistencyException {
     Set<String> clusterEndpointRefs = Resources.getResourceReferences(clusters().resources().values());
 
-    ensureAllResourceNamesExist(CLUSTER_TYPE_URL, ENDPOINT_TYPE_URL, clusterEndpointRefs, endpoints().resources());
+    ensureAllResourceNamesExist(Resources.CLUSTER_TYPE_URL, Resources.ENDPOINT_TYPE_URL, clusterEndpointRefs, endpoints().resources());
+
+    Set<String> v3ClusterEndpointRefs =
+        Resources.getResourceReferences(clustersV3().resources().values());
+
+    ensureAllResourceNamesExist(Resources.V3_CLUSTER_TYPE_URL, Resources.V3_ENDPOINT_TYPE_URL, v3ClusterEndpointRefs,
+        endpointsV3().resources());
 
     Set<String> listenerRouteRefs = Resources.getResourceReferences(listeners().resources().values());
 
-    ensureAllResourceNamesExist(LISTENER_TYPE_URL, ROUTE_TYPE_URL, listenerRouteRefs, routes().resources());
+    ensureAllResourceNamesExist(Resources.LISTENER_TYPE_URL, Resources.ROUTE_TYPE_URL, listenerRouteRefs, routes().resources());
+
+    Set<String> v3ListenerRouteRefs =
+        Resources.getResourceReferences(listenersV3().resources().values());
+
+    ensureAllResourceNamesExist(Resources.V3_LISTENER_TYPE_URL, Resources.V3_ROUTE_TYPE_URL, v3ListenerRouteRefs,
+        routesV3().resources());
   }
 
   /**
@@ -184,16 +260,26 @@ public abstract class Snapshot {
     }
 
     switch (typeUrl) {
-      case CLUSTER_TYPE_URL:
+      case Resources.CLUSTER_TYPE_URL:
         return clusters().resources();
-      case ENDPOINT_TYPE_URL:
+      case Resources.V3_CLUSTER_TYPE_URL:
+        return clustersV3().resources();
+      case Resources.ENDPOINT_TYPE_URL:
         return endpoints().resources();
-      case LISTENER_TYPE_URL:
+      case Resources.V3_ENDPOINT_TYPE_URL:
+        return endpointsV3().resources();
+      case Resources.LISTENER_TYPE_URL:
         return listeners().resources();
-      case ROUTE_TYPE_URL:
+      case Resources.V3_LISTENER_TYPE_URL:
+        return listenersV3().resources();
+      case Resources.ROUTE_TYPE_URL:
         return routes().resources();
-      case SECRET_TYPE_URL:
+      case Resources.V3_ROUTE_TYPE_URL:
+        return routesV3().resources();
+      case Resources.SECRET_TYPE_URL:
         return secrets().resources();
+      case Resources.V3_SECRET_TYPE_URL:
+        return secretsV3().resources();
       default:
         return ImmutableMap.of();
     }
@@ -221,16 +307,26 @@ public abstract class Snapshot {
     }
 
     switch (typeUrl) {
-      case CLUSTER_TYPE_URL:
+      case Resources.CLUSTER_TYPE_URL:
         return clusters().version(resourceNames);
-      case ENDPOINT_TYPE_URL:
+      case Resources.V3_CLUSTER_TYPE_URL:
+        return clustersV3().version(resourceNames);
+      case Resources.ENDPOINT_TYPE_URL:
         return endpoints().version(resourceNames);
-      case LISTENER_TYPE_URL:
+      case Resources.V3_ENDPOINT_TYPE_URL:
+        return endpointsV3().version(resourceNames);
+      case Resources.LISTENER_TYPE_URL:
         return listeners().version(resourceNames);
-      case ROUTE_TYPE_URL:
+      case Resources.V3_LISTENER_TYPE_URL:
+        return listenersV3().version(resourceNames);
+      case Resources.ROUTE_TYPE_URL:
         return routes().version(resourceNames);
-      case SECRET_TYPE_URL:
+      case Resources.V3_ROUTE_TYPE_URL:
+        return routesV3().version(resourceNames);
+      case Resources.SECRET_TYPE_URL:
         return secrets().version(resourceNames);
+      case Resources.V3_SECRET_TYPE_URL:
+        return secretsV3().version(resourceNames);
       default:
         return "";
     }
@@ -273,4 +369,5 @@ public abstract class Snapshot {
       }
     }
   }
+
 }

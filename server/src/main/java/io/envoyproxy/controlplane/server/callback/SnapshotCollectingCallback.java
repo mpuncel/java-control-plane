@@ -4,7 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.envoyproxy.controlplane.cache.NodeGroup;
 import io.envoyproxy.controlplane.cache.Snapshot;
-import io.envoyproxy.controlplane.cache.SnapshotCache;
 import io.envoyproxy.controlplane.server.DiscoveryServerCallbacks;
 import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
 import java.time.Clock;

@@ -2,7 +2,6 @@ package io.envoyproxy.controlplane.server;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.Duration;
-import io.envoyproxy.controlplane.cache.SimpleCache;
 import io.envoyproxy.controlplane.cache.Snapshot;
 import io.envoyproxy.envoy.api.v2.Cluster;
 import io.envoyproxy.envoy.api.v2.Cluster.DiscoveryType;

@@ -1,7 +1,7 @@
 package io.envoyproxy.controlplane.v3.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import io.envoyproxy.controlplane.core.cache.CacheStatusInfo;
+import io.envoyproxy.controlplane.core.cache.Watch;
 import io.envoyproxy.envoy.config.core.v3.Node;
 import io.envoyproxy.envoy.service.discovery.v3.DiscoveryRequest;
 import java.util.Collection;
@@ -11,20 +11,22 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class CacheStatusInfoTest {
 
   @Test
   public void nodeGroupReturnsExpectedGroup() {
     Node node = Node.newBuilder().setId(UUID.randomUUID().toString()).build();
 
-    CacheStatusInfo<Node> info = new CacheStatusInfo<>(node);
+    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(node);
 
     assertThat(info.nodeGroup()).isSameAs(node);
   }
 
   @Test
   public void lastWatchRequestTimeReturns0IfNotSet() {
-    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
     assertThat(info.lastWatchRequestTime()).isZero();
   }
@@ -33,7 +35,7 @@ public class CacheStatusInfoTest {
   public void lastWatchRequestTimeReturnsExpectedValueIfSet() {
     final long lastWatchRequestTime = ThreadLocalRandom.current().nextLong(10000, 50000);
 
-    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
     info.setLastWatchRequestTime(lastWatchRequestTime);
 
@@ -46,7 +48,7 @@ public class CacheStatusInfoTest {
     final long watchId1 = ThreadLocalRandom.current().nextLong(10000, 50000);
     final long watchId2 = ThreadLocalRandom.current().nextLong(50000, 100000);
 
-    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
     assertThat(info.numWatches()).isZero();
 
@@ -72,7 +74,7 @@ public class CacheStatusInfoTest {
     final long watchId1 = ThreadLocalRandom.current().nextLong(10000, 50000);
     final long watchId2 = ThreadLocalRandom.current().nextLong(50000, 100000);
 
-    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
     info.setWatch(watchId1, new Watch(ads, DiscoveryRequest.getDefaultInstance(), r -> { }));
     info.setWatch(watchId2, new Watch(ads, DiscoveryRequest.getDefaultInstance(), r -> { }));
@@ -91,7 +93,7 @@ public class CacheStatusInfoTest {
     final boolean ads = ThreadLocalRandom.current().nextBoolean();
     final int watchCount = 50;
 
-    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
     Collection<Long> watchIds = LongStream.range(0, watchCount).boxed().collect(Collectors.toList());
 
