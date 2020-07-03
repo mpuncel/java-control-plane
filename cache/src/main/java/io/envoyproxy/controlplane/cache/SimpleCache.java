@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>The snapshot can be partial, e.g. only include RDS or EDS resources.
  */
-public class SimpleCache<T, R> implements SnapshotCache<T, R> {
+public class SimpleCache<T> implements SnapshotCache<T> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SimpleCache.class);
 
@@ -86,7 +86,7 @@ public class SimpleCache<T, R> implements SnapshotCache<T, R> {
       boolean ads,
       XdsRequest request,
       Set<String> knownResourceNames,
-      Consumer<R> responseConsumer) {
+      Consumer<Response> responseConsumer) {
     return createWatch(ads, request, knownResourceNames, responseConsumer, false);
   }
 
@@ -98,7 +98,7 @@ public class SimpleCache<T, R> implements SnapshotCache<T, R> {
       boolean ads,
       XdsRequest request,
       Set<String> knownResourceNames,
-      Consumer<R> responseConsumer,
+      Consumer<Response> responseConsumer,
       boolean hasClusterChanged) {
 
     T group;

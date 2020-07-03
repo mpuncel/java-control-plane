@@ -63,7 +63,7 @@ public class SimpleCacheTest {
 
   @Test
   public void invalidNamesListShouldReturnWatcherWithNoResponseInAdsMode() {
-    SimpleCache<String> cache = new SimpleCache<>(new SingleNodeGroup());
+    SimpleCache<String, Response> cache = new SimpleCache<>(new SingleNodeGroup());
 
     cache.setSnapshot(SingleNodeGroup.GROUP, SNAPSHOT1);
 
@@ -71,11 +71,11 @@ public class SimpleCacheTest {
 
     Watch watch = cache.createWatch(
         true,
-        DiscoveryRequest.newBuilder()
+        XdsRequest.create(DiscoveryRequest.newBuilder()
             .setNode(Node.getDefaultInstance())
             .setTypeUrl(Resources.ENDPOINT_TYPE_URL)
             .addResourceNames("none")
-            .build(),
+            .build()),
         Collections.emptySet(),
         responseTracker);
 
@@ -92,11 +92,11 @@ public class SimpleCacheTest {
 
     Watch watch = cache.createWatch(
         false,
-        DiscoveryRequest.newBuilder()
+        XdsRequest.create(DiscoveryRequest.newBuilder()
             .setNode(Node.getDefaultInstance())
             .setTypeUrl(Resources.ENDPOINT_TYPE_URL)
             .addResourceNames("none")
-            .build(),
+            .build()),
         Collections.emptySet(),
         responseTracker);
 
@@ -115,11 +115,11 @@ public class SimpleCacheTest {
 
       Watch watch = cache.createWatch(
           ADS,
-          DiscoveryRequest.newBuilder()
+          XdsRequest.create(DiscoveryRequest.newBuilder()
               .setNode(Node.getDefaultInstance())
               .setTypeUrl(typeUrl)
               .addAllResourceNames(SNAPSHOT1.resources(typeUrl).keySet())
-              .build(),
+              .build()),
           Collections.emptySet(),
           responseTracker);
 
@@ -141,12 +141,12 @@ public class SimpleCacheTest {
 
     Watch watch = cache.createWatch(
         ADS,
-        DiscoveryRequest.newBuilder()
+        XdsRequest.create(DiscoveryRequest.newBuilder()
             .setNode(Node.getDefaultInstance())
             .setVersionInfo(VERSION1)
             .setTypeUrl(Resources.ENDPOINT_TYPE_URL)
             .addAllResourceNames(SNAPSHOT1.resources(Resources.ENDPOINT_TYPE_URL).keySet())
-            .build(),
+            .build()),
         Sets.newHashSet(""),
         responseTracker,
         true);
@@ -170,11 +170,11 @@ public class SimpleCacheTest {
 
               Watch watch = cache.createWatch(
                   ADS,
-                  DiscoveryRequest.newBuilder()
+                  XdsRequest.create(DiscoveryRequest.newBuilder()
                       .setNode(Node.getDefaultInstance())
                       .setTypeUrl(typeUrl)
                       .addAllResourceNames(SNAPSHOT1.resources(typeUrl).keySet())
-                      .build(),
+                      .build()),
                   Collections.emptySet(),
                   responseTracker);
 
@@ -261,12 +261,12 @@ public class SimpleCacheTest {
 
               Watch watch = cache.createWatch(
                   ADS,
-                  DiscoveryRequest.newBuilder()
+                  XdsRequest.create(DiscoveryRequest.newBuilder()
                       .setNode(Node.getDefaultInstance())
                       .setTypeUrl(typeUrl)
                       .setVersionInfo(MULTIPLE_RESOURCES_SNAPSHOT2.version(typeUrl))
                       .addAllResourceNames(MULTIPLE_RESOURCES_SNAPSHOT2.resources(typeUrl).keySet())
-                      .build(),
+                      .build()),
                   SNAPSHOT2.resources(typeUrl).keySet(),
                   responseTracker);
 
@@ -305,12 +305,12 @@ public class SimpleCacheTest {
 
               Watch watch = cache.createWatch(
                   ADS,
-                  DiscoveryRequest.newBuilder()
+                  XdsRequest.create(DiscoveryRequest.newBuilder()
                       .setNode(Node.getDefaultInstance())
                       .setTypeUrl(typeUrl)
                       .setVersionInfo(SNAPSHOT2.version(typeUrl))
                       .addAllResourceNames(MULTIPLE_RESOURCES_SNAPSHOT2.resources(typeUrl).keySet())
-                      .build(),
+                      .build()),
                   SNAPSHOT2.resources(typeUrl).keySet(),
                   responseTracker);
 
@@ -337,12 +337,12 @@ public class SimpleCacheTest {
 
               Watch watch = cache.createWatch(
                   ADS,
-                  DiscoveryRequest.newBuilder()
+                  XdsRequest.create(DiscoveryRequest.newBuilder()
                       .setNode(Node.getDefaultInstance())
                       .setTypeUrl(typeUrl)
                       .setVersionInfo(SNAPSHOT1.version(typeUrl))
                       .addAllResourceNames(SNAPSHOT1.resources(typeUrl).keySet())
-                      .build(),
+                      .build()),
                   SNAPSHOT1.resources(typeUrl).keySet(),
                   responseTracker);
 
@@ -374,11 +374,11 @@ public class SimpleCacheTest {
 
               Watch watch = cache.createWatch(
                   ADS,
-                  DiscoveryRequest.newBuilder()
+                  XdsRequest.create(DiscoveryRequest.newBuilder()
                       .setNode(Node.getDefaultInstance())
                       .setTypeUrl(typeUrl)
                       .addAllResourceNames(SNAPSHOT1.resources(typeUrl).keySet())
-                      .build(),
+                      .build()),
                   Collections.emptySet(),
                   responseTracker);
 
@@ -405,11 +405,11 @@ public class SimpleCacheTest {
     ResponseTracker responseTracker = new ResponseTracker();
     Watch watch = cache.createWatch(
         true,
-        DiscoveryRequest.newBuilder()
+        XdsRequest.create(DiscoveryRequest.newBuilder()
             .setNode(Node.getDefaultInstance())
             .setTypeUrl(ROUTE_TYPE_URL)
             .addAllResourceNames(Collections.singleton(ROUTE_NAME))
-            .build(),
+          .build()),
         Collections.singleton(ROUTE_NAME),
         responseTracker);
 
@@ -442,10 +442,10 @@ public class SimpleCacheTest {
 
     cache.setSnapshot(SingleNodeGroup.GROUP, SNAPSHOT1);
 
-    final Watch watch = cache.createWatch(ADS, DiscoveryRequest.newBuilder()
+    final Watch watch = cache.createWatch(ADS, XdsRequest.create(DiscoveryRequest.newBuilder()
             .setNode(Node.getDefaultInstance())
             .setTypeUrl("")
-            .build(),
+            .build()),
         Collections.emptySet(),
         r -> { });
 
@@ -468,10 +468,10 @@ public class SimpleCacheTest {
 
     assertThat(cache.groups()).isEmpty();
 
-    cache.createWatch(ADS, DiscoveryRequest.newBuilder()
+    cache.createWatch(ADS, XdsRequest.create(DiscoveryRequest.newBuilder()
             .setNode(Node.getDefaultInstance())
             .setTypeUrl("")
-            .build(),
+            .build()),
         Collections.emptySet(),
         r -> { });
 
@@ -525,6 +525,10 @@ public class SimpleCacheTest {
       }
 
       return GROUP;
+    }
+
+    public String hashV3(io.envoyproxy.envoy.config.core.v3.Node node) {
+      throw new RuntimeException("Didn't expect a v3 request");
     }
   }
 

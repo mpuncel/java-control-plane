@@ -1,6 +1,6 @@
 package io.envoyproxy.controlplane.cache;
 
-public interface SnapshotCache<Group, Response> extends Cache<Group, Response> {
+public interface SnapshotCache<T> extends Cache<T> {
 
   /**
    * Clears the most recently set {@link Snapshot} and associated metadata for the given node group.
@@ -14,7 +14,7 @@ public interface SnapshotCache<Group, Response> extends Cache<Group, Response> {
    * @param group group identifier
    * @return true if the snapshot was cleared, false otherwise
    */
-  boolean clearSnapshot(Group group);
+  boolean clearSnapshot(T group);
 
   /**
    * Returns the most recently set {@link Snapshot} for the given node group.
@@ -22,7 +22,7 @@ public interface SnapshotCache<Group, Response> extends Cache<Group, Response> {
    * @param group group identifier
    * @return latest snapshot
    */
-  Snapshot getSnapshot(Group group);
+  Snapshot getSnapshot(T group);
 
   /**
    * Set the {@link Snapshot} for the given node group. Snapshots should have distinct versions and be internally
@@ -31,5 +31,5 @@ public interface SnapshotCache<Group, Response> extends Cache<Group, Response> {
    * @param group group identifier
    * @param snapshot a versioned collection of node config data
    */
-  void setSnapshot(Group group, Snapshot snapshot);
+  void setSnapshot(T group, Snapshot snapshot);
 }

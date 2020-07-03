@@ -10,7 +10,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * consumer, in effect terminating the watch for the request. ConfigWatcher implementations must be thread-safe.
  */
 @ThreadSafe
-public interface ConfigWatcher<Response> {
+public interface ConfigWatcher {
 
   /**
    * Returns a new configuration resource {@link Watch} for the given discovery request.
