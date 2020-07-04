@@ -17,14 +17,14 @@ public class CacheStatusInfoTest {
   public void nodeGroupReturnsExpectedGroup() {
     Node node = Node.newBuilder().setId(UUID.randomUUID().toString()).build();
 
-    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(node);
+    CacheStatusInfo<Node> info = new CacheStatusInfo<>(node);
 
     assertThat(info.nodeGroup()).isSameAs(node);
   }
 
   @Test
   public void lastWatchRequestTimeReturns0IfNotSet() {
-    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
     assertThat(info.lastWatchRequestTime()).isZero();
   }
@@ -33,7 +33,7 @@ public class CacheStatusInfoTest {
   public void lastWatchRequestTimeReturnsExpectedValueIfSet() {
     final long lastWatchRequestTime = ThreadLocalRandom.current().nextLong(10000, 50000);
 
-    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
     info.setLastWatchRequestTime(lastWatchRequestTime);
 
@@ -46,16 +46,18 @@ public class CacheStatusInfoTest {
     final long watchId1 = ThreadLocalRandom.current().nextLong(10000, 50000);
     final long watchId2 = ThreadLocalRandom.current().nextLong(50000, 100000);
 
-    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
     assertThat(info.numWatches()).isZero();
 
-    info.setWatch(watchId1, new Watch(ads, DiscoveryRequest.getDefaultInstance(), r -> { }));
+    info.setWatch(watchId1, new Watch(ads,
+        XdsRequest.create(DiscoveryRequest.getDefaultInstance()), r -> { }));
 
     assertThat(info.numWatches()).isEqualTo(1);
     assertThat(info.watchIds()).containsExactlyInAnyOrder(watchId1);
 
-    info.setWatch(watchId2, new Watch(ads, DiscoveryRequest.getDefaultInstance(), r -> { }));
+    info.setWatch(watchId2, new Watch(ads,
+        XdsRequest.create(DiscoveryRequest.getDefaultInstance()), r -> { }));
 
     assertThat(info.numWatches()).isEqualTo(2);
     assertThat(info.watchIds()).containsExactlyInAnyOrder(watchId1, watchId2);
@@ -72,10 +74,12 @@ public class CacheStatusInfoTest {
     final long watchId1 = ThreadLocalRandom.current().nextLong(10000, 50000);
     final long watchId2 = ThreadLocalRandom.current().nextLong(50000, 100000);
 
-    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
-    info.setWatch(watchId1, new Watch(ads, DiscoveryRequest.getDefaultInstance(), r -> { }));
-    info.setWatch(watchId2, new Watch(ads, DiscoveryRequest.getDefaultInstance(), r -> { }));
+    info.setWatch(watchId1, new Watch(ads,
+        XdsRequest.create(DiscoveryRequest.getDefaultInstance()), r -> { }));
+    info.setWatch(watchId2, new Watch(ads,
+        XdsRequest.create(DiscoveryRequest.getDefaultInstance()), r -> { }));
 
     assertThat(info.numWatches()).isEqualTo(2);
     assertThat(info.watchIds()).containsExactlyInAnyOrder(watchId1, watchId2);
@@ -91,12 +95,13 @@ public class CacheStatusInfoTest {
     final boolean ads = ThreadLocalRandom.current().nextBoolean();
     final int watchCount = 50;
 
-    CacheStatusInfo<Node, Watch> info = new CacheStatusInfo<>(Node.getDefaultInstance());
+    CacheStatusInfo<Node> info = new CacheStatusInfo<>(Node.getDefaultInstance());
 
     Collection<Long> watchIds = LongStream.range(0, watchCount).boxed().collect(Collectors.toList());
 
     watchIds.parallelStream().forEach(watchId -> {
-      Watch watch = new Watch(ads, DiscoveryRequest.getDefaultInstance(), r -> { });
+      Watch watch = new Watch(ads, XdsRequest.create(DiscoveryRequest.getDefaultInstance()),
+          r -> { });
 
       info.setWatch(watchId, watch);
     });

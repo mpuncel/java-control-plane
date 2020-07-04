@@ -1,11 +1,6 @@
 package io.envoyproxy.controlplane.server;
 
-import static io.envoyproxy.controlplane.server.TestSnapshots.createSnapshot;
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.containsString;
-
+import io.envoyproxy.controlplane.cache.V2SimpleCache;
 import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
 import io.envoyproxy.envoy.api.v2.DiscoveryResponse;
 import io.grpc.netty.NettyServerBuilder;
@@ -16,6 +11,12 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.testcontainers.containers.Network;
+
+import static io.envoyproxy.controlplane.server.TestSnapshots.createSnapshot;
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.containsString;
 
 public class DiscoveryServerAdsIT {
 
@@ -30,9 +31,10 @@ public class DiscoveryServerAdsIT {
   private static final NettyGrpcServerRule ADS = new NettyGrpcServerRule() {
     @Override
     protected void configureServerBuilder(NettyServerBuilder builder) {
-      final SimpleCache<String> cache = new SimpleCache<>(node -> GROUP);
+      final V2SimpleCache<String> cache = new V2SimpleCache<>(node -> GROUP);
 
-      final DiscoveryServerCallbacks callbacks = new DiscoveryServerCallbacks() {
+      final DiscoveryServerCallbacks callbacks =
+          new DiscoveryServerCallbacks<DiscoveryRequest, DiscoveryResponse>() {
         @Override
         public void onStreamOpen(long streamId, String typeUrl) {
           onStreamOpenLatch.countDown();
@@ -61,7 +63,7 @@ public class DiscoveryServerAdsIT {
               "1")
       );
 
-      DiscoveryServer server = new DiscoveryServer(callbacks, cache);
+      V2DiscoveryServer server = new V2DiscoveryServer(callbacks, cache);
 
       builder.addService(server.getAggregatedDiscoveryServiceImpl());
     }

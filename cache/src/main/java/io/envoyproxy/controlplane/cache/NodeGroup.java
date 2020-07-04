@@ -7,19 +7,12 @@ import javax.annotation.concurrent.ThreadSafe;
  * {@code NodeGroup} aggregates config resources by a consistent grouping of {@link Node}s.
  */
 @ThreadSafe
-public interface NodeGroup<T> {
+public interface NodeGroup<T, U> {
 
   /**
    * Returns a consistent identifier of the given {@link Node}.
    *
    * @param node identifier for the envoy instance that is requesting config
    */
-  T hash(Node node);
-
-  /**
-   * Returns a consistent identifier of the given {@link Node}.
-   *
-   * @param node identifier for the envoy instance that is requesting config
-   */
-  T hashV3(io.envoyproxy.envoy.config.core.v3.Node node);
+  T hash(U node);
 }

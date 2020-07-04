@@ -40,15 +40,15 @@ public abstract class Snapshot<C, CLA, L, R, S> {
 
     return new AutoValue_Snapshot(
         SnapshotResources.create(clusters, version),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(endpoints, version),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(listeners, version),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(routes, version),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(secrets, version),
-        null);
+        SnapshotResources.create(Collections.emptyList(), ""));
   }
 
   /**
@@ -69,15 +69,15 @@ public abstract class Snapshot<C, CLA, L, R, S> {
       String version) {
 
     return new AutoValue_Snapshot(
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(clusters, version),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(endpoints, version),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(listeners, version),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(routes, version),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(secrets, version));
   }
 
@@ -108,15 +108,15 @@ public abstract class Snapshot<C, CLA, L, R, S> {
     // TODO(snowp): add a builder alternative
     return new AutoValue_Snapshot(
         SnapshotResources.create(clusters, clustersVersion),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(endpoints, endpointsVersion),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(listeners, listenersVersion),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(routes, routesVersion),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(secrets, secretsVersion),
-        null);
+        SnapshotResources.create(Collections.emptyList(), ""));
   }
 
   /**
@@ -147,15 +147,15 @@ public abstract class Snapshot<C, CLA, L, R, S> {
 
     return new AutoValue_Snapshot(
         SnapshotResources.create(clusters, clusterVersionResolver),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(endpoints, endpointVersionResolver),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(listeners, listenerVersionResolver),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(routes, routeVersionResolver),
-        null,
+        SnapshotResources.create(Collections.emptyList(), ""),
         SnapshotResources.create(secrets, secretVersionResolver),
-        null);
+        SnapshotResources.create(Collections.emptyList(), ""));
   }
 
   /**

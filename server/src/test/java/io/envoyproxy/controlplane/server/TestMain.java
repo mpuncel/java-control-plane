@@ -3,6 +3,7 @@ package io.envoyproxy.controlplane.server;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.Duration;
 import io.envoyproxy.controlplane.cache.Snapshot;
+import io.envoyproxy.controlplane.cache.V2SimpleCache;
 import io.envoyproxy.envoy.api.v2.Cluster;
 import io.envoyproxy.envoy.api.v2.Cluster.DiscoveryType;
 import io.envoyproxy.envoy.api.v2.core.Address;
@@ -22,7 +23,7 @@ public class TestMain {
    * @param arg command-line args
    */
   public static void main(String[] arg) throws IOException, InterruptedException {
-    SimpleCache<String> cache = new SimpleCache<>(node -> GROUP);
+    V2SimpleCache<String> cache = new V2SimpleCache<>(node -> GROUP);
 
     cache.setSnapshot(
         GROUP,
@@ -41,7 +42,7 @@ public class TestMain {
             ImmutableList.of(),
             "1"));
 
-    DiscoveryServer discoveryServer = new DiscoveryServer(cache);
+    V2DiscoveryServer discoveryServer = new V2DiscoveryServer(cache);
 
     ServerBuilder builder = NettyServerBuilder.forPort(12345)
         .addService(discoveryServer.getAggregatedDiscoveryServiceImpl())

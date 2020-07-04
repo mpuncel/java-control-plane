@@ -30,11 +30,11 @@ import org.slf4j.LoggerFactory;
  *
  * <p>The snapshot can be partial, e.g. only include RDS or EDS resources.
  */
-public class SimpleCache<T> implements SnapshotCache<T> {
+public abstract class SimpleCache<T, U> implements SnapshotCache<T> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SimpleCache.class);
 
-  private final NodeGroup<T> groups;
+  private final NodeGroup<T, U> groups;
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   private final Lock readLock = lock.readLock();
@@ -52,7 +52,7 @@ public class SimpleCache<T> implements SnapshotCache<T> {
    *
    * @param groups maps an envoy host to a node group
    */
-  public SimpleCache(NodeGroup<T> groups) {
+  protected SimpleCache(NodeGroup<T, U> groups) {
     this.groups = groups;
   }
 
@@ -101,14 +101,7 @@ public class SimpleCache<T> implements SnapshotCache<T> {
       Consumer<Response> responseConsumer,
       boolean hasClusterChanged) {
 
-    T group;
-    if (request.getNodeV2() != null) {
-      group = groups.hash(request.getNodeV2());
-    } else if (request.getNodeV3() != null) {
-      group = groups.hashV3(request.getNodeV3());
-    } else {
-      throw new IllegalStateException("request was neither v2 nor v3");
-    }
+    T group = groups.hash(getNode(request));
 
     // even though we're modifying, we take a readLock to allow multiple watches to be created in parallel since it
     // doesn't conflict
@@ -293,6 +286,8 @@ public class SimpleCache<T> implements SnapshotCache<T> {
       });
     }
   }
+
+  abstract U getNode(XdsRequest request);
 
   private Response createResponse(XdsRequest request, Map<String, ? extends Message> resources,
       String version) {

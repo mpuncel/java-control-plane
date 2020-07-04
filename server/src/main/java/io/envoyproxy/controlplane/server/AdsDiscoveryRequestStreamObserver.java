@@ -1,10 +1,7 @@
 package io.envoyproxy.controlplane.server;
 
-import static io.envoyproxy.controlplane.server.DiscoveryServer.ANY_TYPE_URL;
-
 import io.envoyproxy.controlplane.cache.Resources;
-import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
-import io.envoyproxy.envoy.api.v2.DiscoveryResponse;
+import io.envoyproxy.controlplane.cache.Watch;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.util.Collections;
@@ -14,28 +11,32 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
+import static io.envoyproxy.controlplane.server.DiscoveryServer.ANY_TYPE_URL;
+
 /**
  * {@code AdsDiscoveryRequestStreamObserver} is an implementation of {@link DiscoveryRequestStreamObserver} tailored for
  * ADS streams, which handle multiple watches for all TYPE_URLS.
  */
-public class AdsDiscoveryRequestStreamObserver extends DiscoveryRequestStreamObserver {
+public class AdsDiscoveryRequestStreamObserver<T, U> extends DiscoveryRequestStreamObserver<T, U> {
   private final ConcurrentMap<String, Watch> watches;
   private final ConcurrentMap<String, LatestDiscoveryResponse> latestResponse;
   private final ConcurrentMap<String, Set<String>> ackedResources;
+  private final DiscoveryServer<T, U> discoveryServer;
 
-  AdsDiscoveryRequestStreamObserver(StreamObserver<DiscoveryResponse> responseObserver,
-                                    long streamId,
-                                    Executor executor,
-                                    DiscoveryServer discoveryServer) {
+  AdsDiscoveryRequestStreamObserver(StreamObserver<U> responseObserver,
+      long streamId,
+      Executor executor,
+      DiscoveryServer discoveryServer) {
     super(ANY_TYPE_URL, responseObserver, streamId, executor, discoveryServer);
     this.watches = new ConcurrentHashMap<>(Resources.TYPE_URLS.size());
     this.latestResponse = new ConcurrentHashMap<>(Resources.TYPE_URLS.size());
     this.ackedResources = new ConcurrentHashMap<>(Resources.TYPE_URLS.size());
+    this.discoveryServer = discoveryServer;
   }
 
   @Override
-  public void onNext(DiscoveryRequest request) {
-    if (request.getTypeUrl().isEmpty()) {
+  public void onNext(T request) {
+    if (discoveryServer.wrapXdsRequest(request).getTypeUrl().isEmpty()) {
       closeWithError(
           Status.UNKNOWN
               .withDescription(String.format("[%d] type URL is required for ADS", streamId))

@@ -7,7 +7,7 @@ import java.util.function.Consumer;
  * {@code Watch} is a dedicated stream of configuration resources produced by the configuration cache and consumed by
  * the xDS server.
  */
-public class Watch<Response> {
+public class Watch {
   private static final AtomicIntegerFieldUpdater<Watch> isCancelledUpdater =
       AtomicIntegerFieldUpdater.newUpdater(Watch.class, "isCancelled");
   private final boolean ads;

@@ -1,16 +1,12 @@
 package io.envoyproxy.controlplane.server;
 
-import static io.envoyproxy.controlplane.server.TestSnapshots.createSnapshot;
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.containsString;
-
 import com.google.protobuf.util.Durations;
+import io.envoyproxy.controlplane.cache.CacheStatusInfo;
 import io.envoyproxy.controlplane.cache.NodeGroup;
 import io.envoyproxy.controlplane.cache.Resources;
 import io.envoyproxy.controlplane.cache.Snapshot;
 import io.envoyproxy.controlplane.cache.TestResources;
+import io.envoyproxy.controlplane.cache.V2SimpleCache;
 import io.envoyproxy.envoy.api.v2.Cluster;
 import io.envoyproxy.envoy.api.v2.ClusterLoadAssignment;
 import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
@@ -20,6 +16,7 @@ import io.envoyproxy.envoy.api.v2.RouteConfiguration;
 import io.envoyproxy.envoy.api.v2.core.AggregatedConfigSource;
 import io.envoyproxy.envoy.api.v2.core.ConfigSource;
 import io.envoyproxy.envoy.api.v2.core.Http2ProtocolOptions;
+import io.envoyproxy.envoy.api.v2.core.Node;
 import io.grpc.netty.NettyServerBuilder;
 import io.restassured.http.ContentType;
 import java.util.concurrent.ConcurrentMap;
@@ -33,6 +30,12 @@ import org.junit.rules.RuleChain;
 import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
 import org.testcontainers.shaded.org.apache.commons.lang.math.RandomUtils;
+
+import static io.envoyproxy.controlplane.server.TestSnapshots.createSnapshot;
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.containsString;
 
 public class DiscoveryServerAdsWarmingClusterIT {
 
@@ -49,7 +52,8 @@ public class DiscoveryServerAdsWarmingClusterIT {
     @Override
     protected void configureServerBuilder(NettyServerBuilder builder) {
       ExecutorService executorService = Executors.newSingleThreadExecutor();
-      final DiscoveryServerCallbacks callbacks = new DiscoveryServerCallbacks() {
+      final DiscoveryServerCallbacks callbacks =
+          new DiscoveryServerCallbacks<DiscoveryRequest, DiscoveryResponse>() {
         @Override
         public void onStreamOpen(long streamId, String typeUrl) {
           onStreamOpenLatch.countDown();
@@ -79,7 +83,7 @@ public class DiscoveryServerAdsWarmingClusterIT {
               LISTENER_PORT,
               "route0"));
 
-      DiscoveryServer server = new DiscoveryServer(callbacks, cache);
+      V2DiscoveryServer server = new V2DiscoveryServer(callbacks, cache);
 
       builder.addService(server.getAggregatedDiscoveryServiceImpl());
     }
@@ -184,9 +188,9 @@ public class DiscoveryServerAdsWarmingClusterIT {
    * responsible for responding for watches. Because to reproduce this problem we need a lot of connected Envoy's and
    * changes to snapshot it is easier to reproduce this way.
    */
-  static class CustomCache<T> extends SimpleCache<T> {
+  static class CustomCache<T> extends V2SimpleCache<T> {
 
-    public CustomCache(NodeGroup<T> groups) {
+    public CustomCache(NodeGroup<T, Node> groups) {
       super(groups);
     }
 

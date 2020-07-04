@@ -4,6 +4,7 @@ import com.google.auto.value.AutoValue;
 import com.google.protobuf.ProtocolStringList;
 import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
 import io.envoyproxy.envoy.api.v2.core.Node;
+import javax.annotation.Nullable;
 
 /**
  * XdsRequest wraps a DiscoveryRequest of some version and provides common methods as a
@@ -20,8 +21,8 @@ public abstract class XdsRequest {
     return new AutoValue_XdsRequest(null, discoveryRequest);
   }
 
-  abstract DiscoveryRequest v2Request();
-  abstract io.envoyproxy.envoy.service.discovery.v3.DiscoveryRequest v3Request();
+  @Nullable abstract DiscoveryRequest v2Request();
+  @Nullable abstract io.envoyproxy.envoy.service.discovery.v3.DiscoveryRequest v3Request();
 
   /**
    *
@@ -77,5 +78,35 @@ public abstract class XdsRequest {
       return null;
     }
     return v3Request().getNode();
+  }
+
+  public String getResponseNonce() {
+    if (v2Request() != null) {
+      return v2Request().getResponseNonce();
+    }
+    return v3Request().getResponseNonce();
+  }
+
+  public boolean hasErrorDetail() {
+    if (v2Request() != null) {
+      return v2Request().hasErrorDetail();
+    }
+    return v3Request().hasErrorDetail();
+  }
+
+  public DiscoveryRequest requestV2() {
+    if (v2Request() == null) {
+      return null;
+    }
+
+    return v2Request();
+  }
+
+  public io.envoyproxy.envoy.service.discovery.v3.DiscoveryRequest requestV3() {
+    if (v3Request() == null) {
+      return null;
+    }
+
+    return v3Request();
   }
 }

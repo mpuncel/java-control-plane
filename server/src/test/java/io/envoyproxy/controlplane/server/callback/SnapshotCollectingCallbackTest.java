@@ -1,11 +1,11 @@
 package io.envoyproxy.controlplane.server.callback;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.google.common.collect.ImmutableSet;
 import io.envoyproxy.controlplane.cache.NodeGroup;
 import io.envoyproxy.controlplane.cache.Snapshot;
+import io.envoyproxy.controlplane.cache.V2SimpleCache;
 import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
+import io.envoyproxy.envoy.api.v2.core.Node;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -17,20 +17,22 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class SnapshotCollectingCallbackTest {
 
   private static final Clock CLOCK = Clock.fixed(Instant.now(), ZoneId.systemDefault());
-  private static final NodeGroup<String> NODE_GROUP = node -> "group";
+  private static final NodeGroup<String, Node> NODE_GROUP = node -> "group";
   private final ArrayList<String> collectedGroups = new ArrayList<>();
-  private SnapshotCollectingCallback<String> callback;
-  private SimpleCache<String> cache;
+  private V2SnapshotCollectingCallback<String> callback;
+  private V2SimpleCache<String> cache;
 
   @Before
   public void setUp() {
     collectedGroups.clear();
-    cache = new SimpleCache<>(NODE_GROUP);
+    cache = new V2SimpleCache<>(NODE_GROUP);
     cache.setSnapshot("group", Snapshot.createEmpty(""));
-    callback = new SnapshotCollectingCallback<>(cache, NODE_GROUP, CLOCK,
+    callback = new V2SnapshotCollectingCallback<>(cache, NODE_GROUP, CLOCK,
         Collections.singleton(collectedGroups::add), 3, 100);
   }
 
@@ -66,7 +68,7 @@ public class SnapshotCollectingCallbackTest {
     CountDownLatch deleteUnreferencedLatch = new CountDownLatch(1);
 
     // Create a cache with 0 expiry delay, which means the snapshot should get collected immediately.
-    callback = new SnapshotCollectingCallback<String>(cache, NODE_GROUP, CLOCK,
+    callback = new V2SnapshotCollectingCallback<String>(cache, NODE_GROUP, CLOCK,
         ImmutableSet.of(collectedGroups::add, group -> snapshotCollectedLatch.countDown()), -3, 1) {
       @Override synchronized void deleteUnreferenced(Clock clock) {
         super.deleteUnreferenced(clock);

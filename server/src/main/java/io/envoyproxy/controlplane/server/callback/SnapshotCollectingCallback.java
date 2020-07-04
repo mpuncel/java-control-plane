@@ -4,8 +4,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.envoyproxy.controlplane.cache.NodeGroup;
 import io.envoyproxy.controlplane.cache.Snapshot;
+import io.envoyproxy.controlplane.cache.SnapshotCache;
 import io.envoyproxy.controlplane.server.DiscoveryServerCallbacks;
-import io.envoyproxy.envoy.api.v2.DiscoveryRequest;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -39,14 +39,15 @@ import java.util.function.Consumer;
  * causing it to get cleaned up and wipe the state of the other callback even though we now have an active stream
  * for that group.
  */
-public class SnapshotCollectingCallback<T> implements DiscoveryServerCallbacks {
+public abstract class SnapshotCollectingCallback<T, U, V, W>
+    implements DiscoveryServerCallbacks<U, V> {
   private static class SnapshotState {
     int streamCount;
     Instant lastSeen;
   }
 
   private final SnapshotCache<T> snapshotCache;
-  private final NodeGroup<T> nodeGroup;
+  private final NodeGroup<T, W> nodeGroup;
   private final Clock clock;
   private final Set<Consumer<T>> collectorCallbacks;
   private final long collectAfterMillis;
@@ -62,9 +63,10 @@ public class SnapshotCollectingCallback<T> implements DiscoveryServerCallbacks {
    * @param collectorCallbacks the callbacks to invoke when snapshot is collected
    * @param collectAfterMillis how long a snapshot must be referenced for before being collected
    * @param collectionIntervalMillis how often the collection background action should run
+   * awkward but necessary in order for this implementation to support both v2 and v3 requests.
    */
-  public SnapshotCollectingCallback(SnapshotCache<T> snapshotCache,
-      NodeGroup<T> nodeGroup, Clock clock, Set<Consumer<T>> collectorCallbacks,
+  protected SnapshotCollectingCallback(SnapshotCache<T> snapshotCache,
+      NodeGroup<T, W> nodeGroup, Clock clock, Set<Consumer<T>> collectorCallbacks,
       long collectAfterMillis, long collectionIntervalMillis) {
     this.snapshotCache = snapshotCache;
     this.nodeGroup = nodeGroup;
@@ -78,8 +80,8 @@ public class SnapshotCollectingCallback<T> implements DiscoveryServerCallbacks {
   }
 
   @Override
-  public synchronized void onStreamRequest(long streamId, DiscoveryRequest request) {
-    T groupIdentifier = nodeGroup.hash(request.getNode());
+  public synchronized void onStreamRequest(long streamId, U request) {
+    T groupIdentifier = nodeGroup.hash(getNode(request));
 
     SnapshotState snapshotState =
         this.snapshotStates.computeIfAbsent(groupIdentifier, x -> new SnapshotState());
@@ -122,6 +124,8 @@ public class SnapshotCollectingCallback<T> implements DiscoveryServerCallbacks {
     });
   }
 
+  abstract W getNode(U xdsRequest);
+
   private synchronized void onStreamCloseHelper(long streamId) {
     T removed = groupByStream.remove(streamId);
     if (removed == null) {
@@ -132,5 +136,10 @@ public class SnapshotCollectingCallback<T> implements DiscoveryServerCallbacks {
     SnapshotState snapshotState = snapshotStates.get(removed);
     snapshotState.streamCount--;
     snapshotState.lastSeen = clock.instant();
+  }
+
+  public void onStreamResponse(long streamId,
+      io.envoyproxy.envoy.service.discovery.v3.DiscoveryRequest request,
+      io.envoyproxy.envoy.service.discovery.v3.DiscoveryResponse response) {
   }
 }

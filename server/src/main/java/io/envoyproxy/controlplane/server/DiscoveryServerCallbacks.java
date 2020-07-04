@@ -8,7 +8,7 @@ import io.envoyproxy.envoy.api.v2.DiscoveryResponse;
  * {@code DiscoveryServerCallbacks} defines the callbacks that are exposed by the {@link DiscoveryServer}. The callbacks
  * give consumers the opportunity to add their own application-specific logs/metrics based
  */
-public interface DiscoveryServerCallbacks {
+public interface DiscoveryServerCallbacks<T, U> {
 
   /**
    * {@code onStreamClose} is called just before the bi-directional gRPC stream is closed successfully for an envoy
@@ -53,8 +53,7 @@ public interface DiscoveryServerCallbacks {
    * @throws RequestException optionally can throw {@link RequestException} with custom status. That status
    *     will be returned to the client and the stream will be closed with error.
    */
-  default void onStreamRequest(long streamId, DiscoveryRequest request) {
-
+  default void onStreamRequest(long streamId, T request) {
   }
 
   /**
@@ -64,7 +63,6 @@ public interface DiscoveryServerCallbacks {
    * @param request the discovery request sent by the envoy instance
    * @param response the discovery response sent by the discovery server
    */
-  default void onStreamResponse(long streamId, DiscoveryRequest request, DiscoveryResponse response) {
-
+  default void onStreamResponse(long streamId, T request, U response) {
   }
 }

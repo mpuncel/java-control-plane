@@ -1,18 +1,18 @@
 package io.envoyproxy.controlplane.server;
 
-import static java.lang.String.format;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-
 import com.google.common.base.Strings;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import com.google.protobuf.Message;
+import io.envoyproxy.controlplane.cache.ConfigWatcher;
 import io.envoyproxy.controlplane.cache.Resources;
 import io.envoyproxy.controlplane.cache.Response;
 import io.envoyproxy.controlplane.cache.TestResources;
+import io.envoyproxy.controlplane.cache.Watch;
+import io.envoyproxy.controlplane.cache.WatchCancelledException;
+import io.envoyproxy.controlplane.cache.XdsRequest;
 import io.envoyproxy.controlplane.server.exception.RequestException;
 import io.envoyproxy.envoy.api.v2.Cluster;
 import io.envoyproxy.envoy.api.v2.ClusterDiscoveryServiceGrpc;
@@ -54,10 +54,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
 import org.assertj.core.api.Condition;
 import org.junit.Rule;
 import org.junit.Test;
+
+import static java.lang.String.format;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class DiscoveryServerTest {
 
@@ -90,7 +93,7 @@ public class DiscoveryServerTest {
   @Test
   public void testAggregatedHandler() throws InterruptedException {
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getAggregatedDiscoveryServiceImpl());
 
@@ -152,7 +155,7 @@ public class DiscoveryServerTest {
   @Test
   public void testSeparateHandlers() throws InterruptedException {
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getClusterDiscoveryServiceImpl());
     grpcServer.getServiceRegistry().addService(server.getEndpointDiscoveryServiceImpl());
@@ -218,7 +221,7 @@ public class DiscoveryServerTest {
   @Test
   public void testWatchClosed() throws InterruptedException {
     MockConfigWatcher configWatcher = new MockConfigWatcher(true, ImmutableTable.of());
-    DiscoveryServer server = new DiscoveryServer(configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getAggregatedDiscoveryServiceImpl());
 
@@ -252,7 +255,7 @@ public class DiscoveryServerTest {
   @Test
   public void testSendError() throws InterruptedException {
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getAggregatedDiscoveryServiceImpl());
 
@@ -280,7 +283,7 @@ public class DiscoveryServerTest {
   @Test
   public void testStaleNonce() throws InterruptedException {
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getAggregatedDiscoveryServiceImpl());
 
@@ -327,7 +330,7 @@ public class DiscoveryServerTest {
   @Test
   public void testAggregateHandlerDefaultRequestType() throws InterruptedException {
     MockConfigWatcher configWatcher = new MockConfigWatcher(true, ImmutableTable.of());
-    DiscoveryServer server = new DiscoveryServer(configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getAggregatedDiscoveryServiceImpl());
 
@@ -353,7 +356,7 @@ public class DiscoveryServerTest {
   @Test
   public void testSeparateHandlersDefaultRequestType() throws InterruptedException {
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getClusterDiscoveryServiceImpl());
     grpcServer.getServiceRegistry().addService(server.getEndpointDiscoveryServiceImpl());
@@ -462,7 +465,7 @@ public class DiscoveryServerTest {
     };
 
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(callbacks, configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(callbacks, configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getAggregatedDiscoveryServiceImpl());
 
@@ -637,7 +640,7 @@ public class DiscoveryServerTest {
     };
 
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(callbacks, configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(callbacks, configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getClusterDiscoveryServiceImpl());
     grpcServer.getServiceRegistry().addService(server.getEndpointDiscoveryServiceImpl());
@@ -725,7 +728,7 @@ public class DiscoveryServerTest {
     };
 
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(callbacks, configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(callbacks, configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getAggregatedDiscoveryServiceImpl());
 
@@ -753,7 +756,7 @@ public class DiscoveryServerTest {
   @Test
   public void callbackOnError_logsError_onException() {
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(configWatcher);
 
     AggregatedDiscoveryServiceGrpc.AggregatedDiscoveryServiceImplBase service =
         server.getAggregatedDiscoveryServiceImpl();
@@ -779,7 +782,7 @@ public class DiscoveryServerTest {
   @Test
   public void callbackOnError_doesNotLogError_whenCancelled() {
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(configWatcher);
 
     AggregatedDiscoveryServiceGrpc.AggregatedDiscoveryServiceImplBase service =
         server.getAggregatedDiscoveryServiceImpl();
@@ -820,14 +823,14 @@ public class DiscoveryServerTest {
 
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses()) {
       @Override
-      public Watch createWatch(boolean ads, DiscoveryRequest request, Set<String> knownResources,
+      public Watch createWatch(boolean ads, XdsRequest request, Set<String> knownResources,
                                Consumer<Response> responseConsumer, boolean hasClusterChanged) {
         watchCreated.countDown();
         watch.set(super.createWatch(ads, request, knownResources, responseConsumer, false));
         return watch.get();
       }
     };
-    DiscoveryServer server = new DiscoveryServer(callbacks, configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(callbacks, configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getClusterDiscoveryServiceImpl());
 
@@ -874,7 +877,7 @@ public class DiscoveryServerTest {
     };
 
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(callbacks, configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(callbacks, configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getAggregatedDiscoveryServiceImpl());
     AggregatedDiscoveryServiceStub stub = AggregatedDiscoveryServiceGrpc.newStub(grpcServer.getChannel());
@@ -916,7 +919,7 @@ public class DiscoveryServerTest {
     };
 
     MockConfigWatcher configWatcher = new MockConfigWatcher(false, createResponses());
-    DiscoveryServer server = new DiscoveryServer(callbacks, configWatcher);
+    V2DiscoveryServer server = new V2DiscoveryServer(callbacks, configWatcher);
 
     grpcServer.getServiceRegistry().addService(server.getAggregatedDiscoveryServiceImpl());
     AggregatedDiscoveryServiceStub stub = AggregatedDiscoveryServiceGrpc.newStub(grpcServer.getChannel());
@@ -973,7 +976,7 @@ public class DiscoveryServerTest {
     @Override
     public Watch createWatch(
         boolean ads,
-        DiscoveryRequest request,
+        XdsRequest request,
         Set<String> knownResources,
         Consumer<Response> responseConsumer,
         boolean hasClusterChanged) {
@@ -1015,7 +1018,7 @@ public class DiscoveryServerTest {
     }
   }
 
-  private static class MockDiscoveryServerCallbacks implements DiscoveryServerCallbacks {
+  private static class MockDiscoveryServerCallbacks implements DiscoveryServerCallbacks<DiscoveryRequest, DiscoveryResponse> {
 
     private final AtomicInteger streamCloseCount = new AtomicInteger();
     private final AtomicInteger streamCloseWithErrorCount = new AtomicInteger();
