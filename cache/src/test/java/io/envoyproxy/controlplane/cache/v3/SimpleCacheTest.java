@@ -7,10 +7,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Message;
-import io.envoyproxy.controlplane.cache.NodeGroup;
 import io.envoyproxy.controlplane.cache.Resources;
 import io.envoyproxy.controlplane.cache.Response;
 import io.envoyproxy.controlplane.cache.StatusInfo;
+import io.envoyproxy.controlplane.cache.TestUtils.ResponseOrderTracker;
+import io.envoyproxy.controlplane.cache.TestUtils.ResponseTracker;
+import io.envoyproxy.controlplane.cache.TestUtils.SingleNodeGroup;
+import io.envoyproxy.controlplane.cache.TestUtils.WatchAndTracker;
 import io.envoyproxy.controlplane.cache.Watch;
 import io.envoyproxy.controlplane.cache.XdsRequest;
 import io.envoyproxy.envoy.config.cluster.v3.Cluster;
@@ -22,11 +25,9 @@ import io.envoyproxy.envoy.extensions.transport_sockets.tls.v3.Secret;
 import io.envoyproxy.envoy.service.discovery.v3.DiscoveryRequest;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -506,55 +507,5 @@ public class SimpleCacheTest {
     assertThat(response.version()).isEqualTo(snapshot.version(watchAndTracker.watch.request().getTypeUrl()));
     assertThat(response.resources().toArray(new Message[0]))
         .containsExactlyElementsOf(snapshot.resources(watchAndTracker.watch.request().getTypeUrl()).values());
-  }
-
-  private static class ResponseTracker implements Consumer<Response> {
-
-    private final LinkedList<Response> responses = new LinkedList<>();
-
-    @Override
-    public void accept(Response response) {
-      responses.add(response);
-    }
-
-  }
-
-  private static class ResponseOrderTracker implements Consumer<Response> {
-
-    private final LinkedList<String> responseTypes = new LinkedList<>();
-
-    @Override public void accept(Response response) {
-      responseTypes.add(response.request().getTypeUrl());
-    }
-  }
-
-  private static class SingleNodeGroup implements NodeGroup<String> {
-
-    private static final String GROUP = "node";
-
-    @Override
-    public String hash(io.envoyproxy.envoy.api.v2.core.Node node) {
-      throw new IllegalStateException("should not have received a v2 node in a v3 test");
-    }
-
-    @Override
-    public String hash(Node node) {
-      if (node == null) {
-        throw new IllegalArgumentException("node");
-      }
-
-      return GROUP;
-    }
-  }
-
-  private static class WatchAndTracker {
-
-    final Watch watch;
-    final ResponseTracker tracker;
-
-    WatchAndTracker(Watch watch, ResponseTracker tracker) {
-      this.watch = watch;
-      this.tracker = tracker;
-    }
   }
 }
